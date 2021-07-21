@@ -1,4 +1,4 @@
-# foreach hash
+# foreach hash + sort
 
 ```pl
 foreach my $key ( sort keys %volumes ) {}
@@ -26,6 +26,20 @@ while ( my ( $index, $key ) = each(@targets) ) {}
 
 ```pl
 scalar @array_name
+```
+
+# Data::Dumper
+
+```pl
+use Data::Dumper;
+print Dumper \%volumes;
+```
+
+# Deep copy with clone
+
+```pl
+use Clone 'clone';
+my %volumes2 = %{ clone( \%volumes ) };
 ```
 
   <!-- # if size > 32
