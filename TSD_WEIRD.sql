@@ -1,0 +1,1 @@
+CREATE TABLESPACE TSD_WEIRD DATAFILE '/hli_db/oradata1/tsd_weird_01.dbf' SIZE 15G;
