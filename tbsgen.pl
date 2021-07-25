@@ -1,18 +1,19 @@
+#!/usr/bin/perl
 use strict;
 use warnings;
-use Data::Dumper;
-
-# use Clone 'clone';
 
 my $fileName = $0;
 
 my $message = "
 Usage1: \$> perl $fileName lv_grep=oradata tbs_name=TSD_USER size=40G directory=SQLS
-  *directory is optional [default: ./]
 Usage2: \$> perl $fileName lv_grep=oradata parfile=list.par directory=SQLS
-  list.par:
-    TSD_USER, 40G
-    TSD_TEST, 50G\n";
+*lv_grep:   keyword to grep
+*tbs_name:  tablespace name
+*size:      supports Gigabyte only
+*parfile:   list of tablespaces and sizes, example↓
+              TSD_USER, 40G
+              TSD_TEST, 50G
+*directory: optionally sets directory to save [default: ./]\n";
 
 my $cmd = 'cat mock_df-tg';
 
@@ -47,7 +48,7 @@ sub cloneHash {
 sub parseArgs {
     foreach my $arg (@ARGV) {
         if ( $arg eq 'help' or $arg eq '-h' ) {
-            die "*Help:$message";
+            die "Help>$message";
         }
         while ( my ( $key, $value ) = each(%args) ) {
             if ( $arg =~ /$key=/i ) {
@@ -154,7 +155,18 @@ sub aCycle {
 }
 
 sub main {
-    if ( $args{'parfile'} and $args{'lv_grep'} ) {
+    if (    $args{'parfile'}
+        and $args{'tbs_name'}
+        and $args{'size'}
+        and $args{'lv_grep'} )
+    {
+        die "*Error: Conflicted argument:$message";
+    }
+    elsif ( $args{'tbs_name'} and $args{'size'} and $args{'lv_grep'} ) {
+        getVolumes();
+        aCycle( $args{'tbs_name'}, $args{'size'} );
+    }
+    elsif ( $args{'parfile'} and $args{'lv_grep'} ) {
         getVolumes();
         open( FHR, '<', $args{'parfile'} )
           or die "$args{'parfile'}: $!";
@@ -167,12 +179,8 @@ sub main {
         }
         close(FHR);
     }
-    elsif ( $args{'tbs_name'} and $args{'size'} and $args{'lv_grep'} ) {
-        getVolumes();
-        aCycle( $args{'tbs_name'}, $args{'size'} );
-    }
     else {
-        die "*Not enough argument:$message";
+        die "*Error: Not enough argument:$message";
     }
 }
 
