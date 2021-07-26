@@ -5,23 +5,26 @@ use warnings;
 my $fileName = $0;
 
 my $message = "
-Usage1: \$> perl $fileName lv_grep=oradata tbs_name=TSD_USER size=40G directory=SQLS
-Usage2: \$> perl $fileName lv_grep=oradata parfile=list.par directory=SQLS
-*lv_grep:   keyword to grep
-*tbs_name:  tablespace name
-*size:      supports Gigabyte only
-*parfile:   list of tablespaces and sizes, example↓
+Usage1: \$> tbsgen lv_grep=data subdir=ESB tbs_name=TSD_USER size=40G directory=SQLS
+Usage2: \$> tbsgen lv_grep=data subdir=ESB parfile=list.par directory=SQLS
+* lv_grep:   keyword to grep
+- subdir:    optionally sets subdir for datafile [default: '']
+* tbs_name:  tablespace name
+* size:      supports Gigabyte only
+* parfile:   list of tablespaces and sizes, example↓
               TSD_USER, 40G
               TSD_TEST, 50G
-*directory: optionally sets directory to save [default: ./]\n";
+- directory: optionally sets directory to save [default: ./]\n";
 
 my $cmd = 'cat mock_df-tg';
+# my $cmd = 'df -tg';
 
 my %args = (
     parfile   => '',
     tbs_name  => '',
     size      => '',
     lv_grep   => '',
+    subdir    => '',
     directory => '.',
 );
 
@@ -52,7 +55,11 @@ sub parseArgs {
         }
         while ( my ( $key, $value ) = each(%args) ) {
             if ( $arg =~ /$key=/i ) {
-                $args{$key} = $';
+                if ($key eq 'subdir') {
+                    $args{$key} = "$'/";
+                } else {
+                    $args{$key} = $';
+                }
             }
         }
     }
@@ -121,11 +128,11 @@ sub writeQuery {
         my $suffix = $no < 10 ? "0$no" : "$no";
         if ( $no == 1 ) {
             print FH
-"CREATE TABLESPACE $tbsName DATAFILE '$key->{volume}/$fileStem\_$suffix.dbf' SIZE $key->{size}G;\n";
+"CREATE TABLESPACE $tbsName DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}G;\n";
         }
         else {
             print FH
-"ALTER TABLESPACE $tbsName ADD DATAFILE '$key->{volume}/$fileStem\_$suffix.dbf' SIZE $key->{size}G;\n";
+"ALTER TABLESPACE $tbsName ADD DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}G;\n";
         }
     }
     close(FH);

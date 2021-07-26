@@ -1,0 +1,1 @@
+CREATE TABLESPACE TSD_NONAME DATAFILE '/hli_db/oradata1/ESB/tsd_noname_01.dbf' SIZE 10G;

@@ -1,0 +1,1 @@
+CREATE TABLESPACE TSD_USER1 DATAFILE '/hli_db/oradata1/ESB/tsd_user1_01.dbf' SIZE 10G;
