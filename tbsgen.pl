@@ -1,23 +1,26 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use Data::Dumper;
 
+use constant A_FILE_SIZE => 32000;    # MB
+
+my $cmd = 'cat mock_df-tm';
+
+# my $cmd = 'df -tm';
 my $fileName = $0;
-
-my $message = "
+my $message  = "
+tbsgen\@0.9.3
 Usage1: \$> tbsgen lv_grep=data subdir=ESB tbs_name=TSD_USER size=40G directory=SQLS
 Usage2: \$> tbsgen lv_grep=data subdir=ESB parfile=list.par directory=SQLS
 * lv_grep:   keyword to grep
 - subdir:    optionally sets subdir for datafile [default: '']
 * tbs_name:  tablespace name
-* size:      supports Gigabyte only
+* size:      each datafile size supports G, M scale[default: M]
 * parfile:   list of tablespaces and sizes, example↓
               TSD_USER, 40G
               TSD_TEST, 50G
 - directory: optionally sets directory to save [default: ./]\n";
-
-my $cmd = 'cat mock_df-tg';
-# my $cmd = 'df -tg';
 
 my %args = (
     parfile   => '',
@@ -55,13 +58,38 @@ sub parseArgs {
         }
         while ( my ( $key, $value ) = each(%args) ) {
             if ( $arg =~ /$key=/i ) {
-                if ($key eq 'subdir') {
+                if ( $key eq 'subdir' ) {
                     $args{$key} = "$'/";
-                } else {
+                }
+                elsif ( $key eq 'size' ) {
+                    my $sizeInput = $';
+                    $args{$key} = handleScale($sizeInput);
+                }
+                else {
                     $args{$key} = $';
                 }
             }
         }
+    }
+}
+
+sub handleScale {
+    my ($sizeInput) = @_;
+    if ( $sizeInput =~ /\d+/ ) {
+        my $number = $&;
+        my $scale  = $';
+        if ( $scale =~ /g/i ) {
+            return $number * 1024;
+        }
+        elsif ( $scale =~ /^m|^\s*\n/i or $scale eq '' ) {
+            return $number;
+        }
+        else {
+            die "Err: Wrong scale for size: $sizeInput";
+        }
+    }
+    else {
+        die "Err: Wrong number for size: $'";
     }
 }
 
@@ -88,15 +116,18 @@ sub getNameSize {
 
     # $size =~ s/\s*G\s*//ig;
     $name =~ s/\W//ig;
-    $size =~ s/\D//ig;
-    return uc $name, $size;
+    my $sizeMB = handleScale($size);
+
+    # $size =~ s/\D//ig;
+    return uc $name, $sizeMB;
 }
 
 sub createDatafile {
     my ( $tbsName, $size ) = @_;
-    $size =~ s/\D//ig;
+
+    # $size =~ s/\D//ig;
     return 1 if ( $size <= 0 );    # return if done
-    my $scale    = $size >= 32 ? 32 : $size;
+    my $scale    = $size >= A_FILE_SIZE ? A_FILE_SIZE : $size;
     my $prevSize = $size;
 
     foreach my $key ( sort keys %volumes ) {
@@ -106,7 +137,6 @@ sub createDatafile {
             push( @targets, { volume => $key, size => $scale } );
             last;
         }
-
     }
     if ( $prevSize == $size ) {
         print "Error: Not enough space for $tbsName\n";
@@ -128,11 +158,11 @@ sub writeQuery {
         my $suffix = $no < 10 ? "0$no" : "$no";
         if ( $no == 1 ) {
             print FH
-"CREATE TABLESPACE $tbsName DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}G;\n";
+"CREATE TABLESPACE $tbsName DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}M;\n";
         }
         else {
             print FH
-"ALTER TABLESPACE $tbsName ADD DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}G;\n";
+"ALTER TABLESPACE $tbsName ADD DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}M;\n";
         }
     }
     close(FH);
@@ -142,7 +172,7 @@ sub writeQuery {
 sub showRemaining {
     print "Estimated Remaining lv: \n";
     foreach my $key ( sort keys %volumes ) {
-        print("$key: $volumes{$key}G\n");
+        print("$key: $volumes{$key}M\n");
     }
 }
 

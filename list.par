@@ -1,7 +1,3 @@
-TSD_USER1  ,     10G
-TSD_NONAME , 10G
-
-
- TSD_weird , 15G
-
-
+TSD_USER1  ,     40  
+TSD_NONAME , 35000  dasfsdf
+TSD_weird , 15
