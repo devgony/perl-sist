@@ -153,17 +153,18 @@ sub writeQuery {
     $tbsName = uc $tbsName;
     my $outFile = "$args{'directory'}/$tbsName.sql";
     open( FH, '>', "$outFile" ) or die "$outFile: $!";
-    while ( my ( $index, $key ) = each(@targets) ) {
-        my $no     = $index + 1;
+    my $no = 1;
+    for my $obj (@targets) {
         my $suffix = $no < 10 ? "0$no" : "$no";
         if ( $no == 1 ) {
             print FH
-"CREATE TABLESPACE $tbsName DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}M;\n";
+"CREATE TABLESPACE $tbsName DATAFILE '$obj->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $obj->{size}M;\n";
         }
         else {
             print FH
-"ALTER TABLESPACE $tbsName ADD DATAFILE '$key->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $key->{size}M;\n";
+"ALTER TABLESPACE $tbsName ADD DATAFILE '$obj->{volume}/$args{'subdir'}$fileStem\_$suffix.dbf' SIZE $obj->{size}M;\n";
         }
+        $no++;
     }
     close(FH);
     print "Created: $outFile\n";

@@ -6,6 +6,8 @@ foreach my $key ( sort keys %volumes ) {}
 
 # while key, value each hash
 
+- works from `perl 5.12.1`
+
 ```pl
 while ( my ( $key, $value ) = each( %volumes ) ) {}
 ```
